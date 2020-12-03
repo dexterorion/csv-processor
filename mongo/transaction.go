@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/soap-parser/errors"
@@ -115,6 +116,49 @@ func (ac TransactionCollection) GetByID(ctx context.Context, id string) (*model.
 	result := new(model.Transaction)
 
 	err = found.Decode(result)
+
+	if err != nil && err.Error() != errors.NoDocumentsInResult().Error() {
+		return nil, errors.ErrorGetting(transactionCollection, err)
+	}
+
+	return result, nil
+}
+
+// GetByTicketOrMatricula gets an transaction by ticket
+func (ac TransactionCollection) GetByTicketOrMatricula(ctx context.Context, ticket, parking, matricula int64) (*model.Transaction, error) {
+	filter := bson.M{
+		"$or": bson.M{
+			"sequence":  strconv.Itoa(int(ticket)),
+			"matricula": strconv.Itoa(int(matricula)),
+		},
+		"parking_info.id": parking,
+		"deleted_at":      bson.M{"$exists": false},
+	}
+
+	found := ac.access.FindOne(ctx, filter)
+	result := new(model.Transaction)
+
+	err := found.Decode(result)
+
+	if err != nil && err.Error() != errors.NoDocumentsInResult().Error() {
+		return nil, errors.ErrorGetting(transactionCollection, err)
+	}
+
+	return result, nil
+}
+
+// GetByMatricula gets an transaction by ticket
+func (ac TransactionCollection) GetByMatricula(ctx context.Context, parking, matricula int64) (*model.Transaction, error) {
+	filter := bson.M{
+		"matricula":       strconv.Itoa(int(matricula)),
+		"parking_info.id": parking,
+		"deleted_at":      bson.M{"$exists": false},
+	}
+
+	found := ac.access.FindOne(ctx, filter)
+	result := new(model.Transaction)
+
+	err := found.Decode(result)
 
 	if err != nil && err.Error() != errors.NoDocumentsInResult().Error() {
 		return nil, errors.ErrorGetting(transactionCollection, err)

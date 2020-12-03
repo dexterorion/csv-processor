@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/soap-parser/business"
+	"github.com/soap-parser/model"
 	"github.com/soap-parser/mongo"
 	"io/ioutil"
 
@@ -15,15 +16,21 @@ import (
 var (
 	processFile string
 	parkname    string
+	parkslug	string
+	parkid		int64
+	filetype    string
 
 	log *zap.Logger
 )
 
 func init() {
 	flag.StringVar(&processFile, "xmlFilePath", "/home/user/request.xml", "path to file with XML to parse")
+	flag.StringVar(&filetype, "filetype", "pagamentos", "file type to be processed")
 	flag.StringVar(&parkname, "parkname", "Monza", "the name of park to get business logic")
+	flag.StringVar(&parkslug, "parkslug", "monza", "the slug of park to get business logic")
+	flag.Int64Var(&parkid, "parkid", 6, "the id of park to get business logic")
 
-	required := []string{"xmlFilePath", "parkname"}
+	required := []string{"xmlFilePath", "parkname", "filetype", "parkslug", "parkid"}
 	flag.Parse()
 
 	seen := make(map[string]bool)
@@ -54,7 +61,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	processor := business.NewAuconMonza(db, file)
+	parking := model.Parking{
+		Name: parkname,
+		Slug: parkslug,
+		ID: parkid,
+	}
+
+	processor := business.NewAuconMonza(db, file, filetype, parking)
 	err = processor.Process(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error processing file [%s]: [%s]\n", processFile, err.Error())

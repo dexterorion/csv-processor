@@ -29,6 +29,8 @@ type Transaction struct {
 	Sequence         string             `bson:"sequence"`
 	Fiscal           string             `bson:"fiscal"`
 	Partial          string             `bson:"partial"`
+	Matricula        int64              `bson:"matricula"`
+	Categoria        string             `bson:"categoria"`
 
 	Version   int        `bson:"version"`
 	Schema    int        `bson:"schema"`
