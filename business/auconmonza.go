@@ -7,8 +7,13 @@ import (
 	"github.com/soap-parser/model"
 	"github.com/soap-parser/mongo"
 	"os"
-	"strconv"
 	"time"
+)
+
+const (
+	VALID = iota
+	DEVIATION
+	INVALID
 )
 
 type AuconMonza interface {
@@ -53,24 +58,21 @@ func (am *auconMonzaImpl) credenciaisProcess(ctx context.Context) error {
 	}
 
 	for _, cred := range v.Body.GetResponse.GetResult.Credenciados {
-		transaction, err := am.dbAcess.TransactionCollection.GetByMatricula(ctx, am.parking.ID, cred.MATRICULA)
+		transactions, err := am.dbAcess.TransactionCollection.GetAllByMatricula(ctx, am.parking.ID, cred.MATRICULA)
 
 		if err != nil {
-			transaction = &model.Transaction{}
+			return err
 		}
 
-		transaction.Matricula = cred.MATRICULA
-		transaction.Categoria = cred.CATEGORIA
+		for _, transaction := range transactions {
+			transaction.Categoria = cred.CATEGORIA
+			transaction.UseType = cred.CATEGORIA
 
-		if transaction.ID.IsZero() {
-			transaction, err = am.dbAcess.TransactionCollection.Create(ctx, transaction)
-		} else {
-			transaction.IsValid = true
-			transaction, err = am.dbAcess.TransactionCollection.Update(ctx, transaction)
-		}
+			_, err = am.dbAcess.TransactionCollection.Update(ctx, &transaction)
 
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error changing transaction: [%s]\n", err.Error())
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "error changing transaction: [%s]\n", err.Error())
+			}
 		}
 	}
 
@@ -86,27 +88,35 @@ func (am *auconMonzaImpl) pagamentosProcess(ctx context.Context) error {
 	}
 
 	for _, pagto := range v.Body.GetResponse.GetResult.Diffgram.DocElement.Pagtos {
-		transaction, err := am.dbAcess.TransactionCollection.GetByTicketOrMatricula(ctx, pagto.Ticket, am.parking.ID, pagto.Matricula)
+		transaction, err := am.dbAcess.TransactionCollection.GetByTicketAndMatricula(ctx, pagto.Ticket, am.parking.ID, pagto.Matricula)
 
+		pd, err := time.Parse("2006-01-02T15:04:05-03:00", pagto.Data)
 		if err != nil {
+			fmt.Fprintf(os.Stderr, "error parsing checking date: [%s]\n", err.Error())
+			continue
+		}
+
+		if err != nil || transaction.PaymentDate.Equal(pd) {
 			transaction = &model.Transaction{}
 		}
 
-		transaction.UseType = getUseType(pagto.Tp)
-		transaction.OfferType = "On-demand"
-		transaction.Sequence = strconv.Itoa(int(pagto.Ticket))
+		transaction.UseType = getUseTypePagto(pagto)
+		transaction.Sequence = pagto.Ticket
 		transaction.FareAmount = pagto.Valor
 		transaction.PaidAmount = pagto.Valor
 		transaction.Discount = pagto.Desconto
 		transaction.ParkingInfo = am.parking
 		transaction.PaymentMethod = getPaymentMethod(pagto.TpPagamento)
-		transaction.Status = "valid"
+		transaction.OfferType = "On-demand"
+
 		transaction.Matricula = pagto.Matricula
+		transaction.PaymentDate = pd
 
 		if transaction.ID.IsZero() {
 			transaction, err = am.dbAcess.TransactionCollection.Create(ctx, transaction)
 		} else {
-			transaction.IsValid = true
+			transaction.Status = resolveStatus(transaction)
+			transaction.IsValid = resolveValid(transaction)
 			transaction, err = am.dbAcess.TransactionCollection.Update(ctx, transaction)
 		}
 
@@ -118,21 +128,66 @@ func (am *auconMonzaImpl) pagamentosProcess(ctx context.Context) error {
 	return nil
 }
 
+func resolveValid(transaction *model.Transaction) bool {
+	if transaction.Status == INVALID || transaction.Status == DEVIATION {
+		return false
+	}
+
+	if transaction.PaymentMethod == "Cancelado" {
+		return false
+	}
+
+	return true
+}
+
+func resolveStatus(transaction *model.Transaction) int {
+	if transaction.Sequence == "0" && transaction.Matricula != "0" && transaction.FareAmount == 0 {
+		return VALID
+	}
+
+	if transaction.Sequence == "0" && transaction.Matricula != "0" && transaction.FareAmount != 0 {
+		return DEVIATION
+	}
+
+	if transaction.Sequence == "0" && transaction.Matricula == "0" {
+		return DEVIATION
+	}
+
+	if transaction.Sequence != "0" && transaction.Matricula != "0" && transaction.FareAmount == 0 {
+		return VALID
+	}
+
+	if transaction.Sequence != "0" && transaction.Matricula == "0" && transaction.FareAmount == 0 {
+		return DEVIATION
+	}
+
+	if transaction.Sequence != "0" && transaction.Matricula == "0" && transaction.FareAmount != 0 {
+		return VALID
+	}
+
+	// apply fare rules
+
+	return INVALID
+}
+
 func getPagtoValid(value string) bool {
 	return value != "Other" && value != "C"
 }
 
-func getUseType(value string) string {
-	switch value {
-	case "A":
-		return "Rotativo"
-	case "L":
-		return "Local"
-	case "R":
-		return "Mensalista"
-	default:
-		return "Outro"
+func getUseTypePagto(pagto model.AuconPagamento) string {
+	if pagto.Ticket != "0" && pagto.Matricula == "0" {
+		return "Avulso"
 	}
+
+	return ""
+}
+
+func getUseTypeSaida(saida model.AuconSaida) string {
+	if saida.Ticket != "0" && saida.Matricula == "0" {
+		return "Avulso"
+	}
+
+	return ""
 }
 
 func getPaymentMethod(value string) string {
@@ -163,11 +218,7 @@ func (am *auconMonzaImpl) saidasProcess(ctx context.Context) error {
 	}
 
 	for _, saida := range v.Body.GetResponse.GetResult.Saidas {
-		transaction, err := am.dbAcess.TransactionCollection.GetByTicketOrMatricula(ctx, saida.Ticket, am.parking.ID, saida.Matricula)
-
-		if err != nil {
-			transaction = &model.Transaction{}
-		}
+		transaction, err := am.dbAcess.TransactionCollection.GetByTicketAndMatricula(ctx, saida.Ticket, am.parking.ID, saida.Matricula)
 
 		ci, err := time.Parse("2006-01-02T15:04:05", saida.DataEnt)
 		if err != nil {
@@ -179,6 +230,10 @@ func (am *auconMonzaImpl) saidasProcess(ctx context.Context) error {
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "error parsing checkout date: [%s]\n", err.Error())
 			continue
+		}
+
+		if err != nil || !transaction.CheckinDate.Equal(ci) || !transaction.CheckoutDate.Equal(co) {
+			transaction = &model.Transaction{}
 		}
 
 		transaction.CheckinDate = ci
@@ -214,15 +269,17 @@ func (am *auconMonzaImpl) saidasProcess(ctx context.Context) error {
 			ci = ci.Add(30 * time.Minute)
 		}
 
-		transaction.Status = "valid"
 		transaction.OfferType = "On-demand"
-		transaction.Sequence = strconv.Itoa(int(saida.Ticket))
+		transaction.Sequence = saida.Ticket
 		transaction.ParkingInfo = am.parking
+
+		transaction.UseType = getUseTypeSaida(saida)
 
 		if transaction.ID.IsZero() {
 			transaction, err = am.dbAcess.TransactionCollection.Create(ctx, transaction)
 		} else {
-			transaction.IsValid = true
+			transaction.Status = resolveStatus(transaction)
+			transaction.IsValid = resolveValid(transaction)
 			transaction, err = am.dbAcess.TransactionCollection.Update(ctx, transaction)
 		}
 

@@ -2,7 +2,6 @@ package mongo
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/soap-parser/errors"
@@ -124,13 +123,11 @@ func (ac TransactionCollection) GetByID(ctx context.Context, id string) (*model.
 	return result, nil
 }
 
-// GetByTicketOrMatricula gets an transaction by ticket
-func (ac TransactionCollection) GetByTicketOrMatricula(ctx context.Context, ticket, parking, matricula int64) (*model.Transaction, error) {
+// GetByTicketAndMatricula gets an transaction by ticket and matricula
+func (ac TransactionCollection) GetByTicketAndMatricula(ctx context.Context, ticket string, parking int64, matricula string) (*model.Transaction, error) {
 	filter := bson.M{
-		"$or": bson.M{
-			"sequence":  strconv.Itoa(int(ticket)),
-			"matricula": strconv.Itoa(int(matricula)),
-		},
+		"sequence":        ticket,
+		"matricula":       matricula,
 		"parking_info.id": parking,
 		"deleted_at":      bson.M{"$exists": false},
 	}
@@ -147,24 +144,27 @@ func (ac TransactionCollection) GetByTicketOrMatricula(ctx context.Context, tick
 	return result, nil
 }
 
-// GetByMatricula gets an transaction by ticket
-func (ac TransactionCollection) GetByMatricula(ctx context.Context, parking, matricula int64) (*model.Transaction, error) {
+// GetAllByMatricula gets all transaction by matricula
+func (ac TransactionCollection) GetAllByMatricula(ctx context.Context, parking, matricula int64) ([]model.Transaction, error) {
 	filter := bson.M{
-		"matricula":       strconv.Itoa(int(matricula)),
+		"matricula":       matricula,
 		"parking_info.id": parking,
 		"deleted_at":      bson.M{"$exists": false},
 	}
 
-	found := ac.access.FindOne(ctx, filter)
-	result := new(model.Transaction)
+	cursor, err := ac.access.Find(ctx, filter)
 
-	err := found.Decode(result)
-
-	if err != nil && err.Error() != errors.NoDocumentsInResult().Error() {
-		return nil, errors.ErrorGetting(transactionCollection, err)
+	if err != nil {
+		return nil, errors.ErrorListing(transactionCollection, err)
 	}
 
-	return result, nil
+	var transactions []model.Transaction
+	err = cursor.All(ctx, &transactions)
+	if err != nil {
+		return nil, errors.ErrorListing(transactionCollection, err)
+	}
+
+	return transactions, nil
 }
 
 // Delete deleted an transaction (logically)

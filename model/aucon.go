@@ -2,7 +2,6 @@ package model
 
 import (
 	"encoding/xml"
-	"time"
 )
 
 type AuconSaida struct {
@@ -10,9 +9,9 @@ type AuconSaida struct {
 	DataEnt     string  `xml:"DATA_ENT" bson:"data_ent"`
 	DataSai     string  `xml:"DATA_SAI" bson:"data_sai"`
 	TpAcesso    string  `xml:"TP_ACESSO" bson:"tp_acesso"`
-	Ticket      int64   `xml:"TICKET" bson:"ticket"`
+	Ticket      string  `xml:"TICKET" bson:"ticket"`
 	Card        string  `xml:"CARD" bson:"card"`
-	Matricula   int64   `xml:"MATRICULA" bson:"matricula"`
+	Matricula   string  `xml:"MATRICULA" bson:"matricula"`
 	Placa       string  `xml:"PLACA" bson:"placa"`
 	Modelo      string  `xml:"MODELO" bson:"modelo"`
 	Cor         string  `xml:"COR" bson:"cor"`
@@ -33,24 +32,24 @@ type AuconSaida struct {
 
 type AuconPagamento struct {
 	XMLName       xml.Name
-	Data          time.Time `xml:"DATA" bson:"data"`
-	Ticket        int64     `xml:"TICKET" bson:"ticket"`
-	Tp            string    `xml:"TP" bson:"tp"`
-	Matricula     int64     `xml:"MATRICULA" bson:"matricula"`
-	TpPagamento   string    `xml:"TP_PAGTO" bson:"tp_pagto"`
-	Convenio      string    `xml:"CONVENIO" bson:"convenio"`
-	TempoCob      int64     `xml:"TEMPO_COB" bson:"tempo_cob"`
-	Valor         float64   `xml:"VALOR" bson:"valor"`
-	Debito        float64   `xml:"DEBITO" bson:"debito"`
-	Desconto      float64   `xml:"DESCONTO" bson:"desconto"`
-	Operador      string    `xml:"OPERADOR" bson:"operador"`
-	Motivo        string    `xml:"MOTIVO" bson:"motivo"`
-	Filial        int64     `xml:"FILIAL" bson:"filial"`
-	QtSelos       int64     `xml:"QT_SELOS" bson:"qt_selos"`
-	TpSelos       int64     `xml:"TP_SELOS" bson:"tp_selos"`
-	Nomeconvenio  string    `xml:"NOMECONVENIO" bson:"nomeconvenio"`
-	Fechamento    int64     `xml:"FECHAMENTO" bson:"fechamento"`
-	ConvCodBarras int64     `xml:"CONVENIO_COD_BARRAS" bson:"convenio_cod_barras"`
+	Data          string  `xml:"DATA" bson:"data"`
+	Ticket        string  `xml:"TICKET" bson:"ticket"`
+	Tp            string  `xml:"TP" bson:"tp"`
+	Matricula     string  `xml:"MATRICULA" bson:"matricula"`
+	TpPagamento   string  `xml:"TP_PAGTO" bson:"tp_pagto"`
+	Convenio      string  `xml:"CONVENIO" bson:"convenio"`
+	TempoCob      int64   `xml:"TEMPO_COB" bson:"tempo_cob"`
+	Valor         float64 `xml:"VALOR" bson:"valor"`
+	Debito        float64 `xml:"DEBITO" bson:"debito"`
+	Desconto      float64 `xml:"DESCONTO" bson:"desconto"`
+	Operador      string  `xml:"OPERADOR" bson:"operador"`
+	Motivo        string  `xml:"MOTIVO" bson:"motivo"`
+	Filial        int64   `xml:"FILIAL" bson:"filial"`
+	QtSelos       int64   `xml:"QT_SELOS" bson:"qt_selos"`
+	TpSelos       int64   `xml:"TP_SELOS" bson:"tp_selos"`
+	Nomeconvenio  string  `xml:"NOMECONVENIO" bson:"nomeconvenio"`
+	Fechamento    int64   `xml:"FECHAMENTO" bson:"fechamento"`
+	ConvCodBarras int64   `xml:"CONVENIO_COD_BARRAS" bson:"convenio_cod_barras"`
 }
 
 type AuconCredenciado struct {

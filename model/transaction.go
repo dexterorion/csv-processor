@@ -13,6 +13,7 @@ type Transaction struct {
 	TimeIntervalHour []time.Time        `bson:"time_interval_hour"`
 	CheckinDate      time.Time          `bson:"checkin_date"`
 	CheckoutDate     time.Time          `bson:"checkout_date"`
+	PaymentDate      time.Time          `bson:"payment_date"`
 	FareAmount       float64            `bson:"fare_amount"`
 	FareName         string             `bson:"fare_name"`
 	PaidAmount       float64            `bson:"paid_amount"`
@@ -24,12 +25,12 @@ type Transaction struct {
 	Duration         float64            `bson:"duration"`
 	IsValid          bool               `bson:"is_valid"`
 	ParkingInfo      Parking            `bson:"parking_info"`
-	Status           string             `bson:"status"`
+	Status           int                `bson:"status"`
 	CashRegisterID   int64              `bson:"cash_register_id"`
 	Sequence         string             `bson:"sequence"`
 	Fiscal           string             `bson:"fiscal"`
 	Partial          string             `bson:"partial"`
-	Matricula        int64              `bson:"matricula"`
+	Matricula        string             `bson:"matricula"`
 	Categoria        string             `bson:"categoria"`
 
 	Version   int        `bson:"version"`

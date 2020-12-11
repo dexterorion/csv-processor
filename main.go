@@ -16,8 +16,8 @@ import (
 var (
 	processFile string
 	parkname    string
-	parkslug	string
-	parkid		int64
+	parkslug    string
+	parkid      int64
 	filetype    string
 
 	log *zap.Logger
@@ -64,7 +64,7 @@ func main() {
 	parking := model.Parking{
 		Name: parkname,
 		Slug: parkslug,
-		ID: parkid,
+		ID:   parkid,
 	}
 
 	processor := business.NewAuconMonza(db, file, filetype, parking)

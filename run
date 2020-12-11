@@ -1,0 +1,11 @@
+run monza
+
+go run main.go -xmlFilePath=/home/vinnynordi/Desktop/Projects/Lots/Park/Lyon/Monza/saidas.xml -filetype=saidas -parkname=Monza -parkslug=monza -parkid=7
+go run main.go -xmlFilePath=/home/vinnynordi/Desktop/Projects/Lots/Park/Lyon/Monza/pagamentos.xml -filetype=pagamentos -parkname=Monza -parkslug=monza -parkid=7
+go run main.go -xmlFilePath=/home/vinnynordi/Desktop/Projects/Lots/Park/Lyon/Monza/credenciados.xml -filetype=credenciados -parkname=Monza -parkslug=monza -parkid=7
+
+run patio
+
+go run main.go -xmlFilePath=/home/vinnynordi/Desktop/Projects/Lots/Park/Lyon/Patio/saidas.xml -filetype=saidas -parkname=Patio -parkslug=patio -parkid=8
+go run main.go -xmlFilePath=/home/vinnynordi/Desktop/Projects/Lots/Park/Lyon/Patio/pagamentos.xml -filetype=pagamentos -parkname=Patio -parkslug=patio -parkid=8
+go run main.go -xmlFilePath=/home/vinnynordi/Desktop/Projects/Lots/Park/Lyon/Patio/credenciados.xml -filetype=credenciados -parkname=Patio -parkslug=patio -parkid=8
