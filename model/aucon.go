@@ -54,7 +54,7 @@ type AuconPagamento struct {
 
 type AuconCredenciado struct {
 	XMLName    xml.Name
-	MATRICULA  int64  `xml:"MATRICULA"`
+	MATRICULA  string `xml:"MATRICULA"`
 	NOME       string `xml:"NOME"`
 	ENDERECO   string `xml:"ENDERECO"`
 	CIDADE     string `xml:"CIDADE"`

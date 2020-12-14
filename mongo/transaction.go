@@ -145,7 +145,7 @@ func (ac TransactionCollection) GetByTicketAndMatricula(ctx context.Context, tic
 }
 
 // GetAllByMatricula gets all transaction by matricula
-func (ac TransactionCollection) GetAllByMatricula(ctx context.Context, parking, matricula int64) ([]model.Transaction, error) {
+func (ac TransactionCollection) GetAllByMatricula(ctx context.Context, parking int64, matricula string) ([]model.Transaction, error) {
 	filter := bson.M{
 		"matricula":       matricula,
 		"parking_info.id": parking,
