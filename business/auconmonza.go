@@ -157,8 +157,12 @@ func resolveStatus(transaction *model.Transaction) int {
 		return VALID
 	}
 
-	if transaction.Sequence != "0" && transaction.Matricula == "0" && transaction.FareAmount == 0 {
+	if transaction.Sequence != "0" && transaction.Matricula == "0" && transaction.FareAmount == 0 && transaction.PaymentMethod != "Isento" {
 		return DEVIATION
+	}
+
+	if transaction.Sequence != "0" && transaction.Matricula == "0" && transaction.FareAmount == 0 && transaction.PaymentMethod == "Isento" {
+		return VALID
 	}
 
 	if transaction.Sequence != "0" && transaction.Matricula == "0" && transaction.FareAmount != 0 {
