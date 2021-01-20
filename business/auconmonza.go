@@ -193,19 +193,19 @@ func getUseTypeSaida(saida model.AuconSaida) string {
 func getPaymentMethod(value string) string {
 	switch value {
 	case "CC":
-		return "creditcard"
+		return "Creditcard"
 	case "CD":
-		return "debitcard"
+		return "Debitcard"
 	case "DI":
-		return "DINHEIRO"
+		return "Dinheiro"
 	case "CA":
 		return "Cancelado"
 	case "IS":
 		return "Isento"
 	case "CH":
-		return "cheque"
+		return "Cheque"
 	default:
-		return "Other"
+		return "Outro"
 	}
 }
 
@@ -240,20 +240,10 @@ func (am *auconMonzaImpl) saidasProcess(ctx context.Context) error {
 		transaction.CheckoutDate = co
 		transaction.Matricula = saida.Matricula
 
-		if co.Minute() > 30 {
-			co = time.Date(co.Year(), co.Month(), co.Day(), co.Hour()+1, 0, 0, 0, co.Location())
-		} else {
-			if co.Minute() > 1 {
-				co = time.Date(co.Year(), co.Month(), co.Day(), co.Hour(), 30, 0, 0, co.Location())
-			} else {
-				co = time.Date(co.Year(), co.Month(), co.Day(), co.Hour(), 0, 0, 0, co.Location())
-			}
-		}
+		co = time.Date(co.Year(), co.Month(), co.Day(), co.Hour(), 0, 0, 0, co.Location())
 
-		if ci.Minute() > 30 {
+		if ci.Minute() > 0 || ci.Second() > 0 {
 			ci = time.Date(ci.Year(), ci.Month(), ci.Day(), ci.Hour()+1, 0, 0, 0, ci.Location())
-		} else {
-			ci = time.Date(ci.Year(), ci.Month(), ci.Day(), ci.Hour(), 30, 0, 0, ci.Location())
 		}
 
 		transaction.TimeIntervalHour = []time.Time{}
@@ -264,9 +254,9 @@ func (am *auconMonzaImpl) saidasProcess(ctx context.Context) error {
 				break
 			}
 
-			transaction.Duration = transaction.Duration + 0.5
+			transaction.Duration = transaction.Duration + 1
 			transaction.TimeIntervalHour = append(transaction.TimeIntervalHour, ci)
-			ci = ci.Add(30 * time.Minute)
+			ci = ci.Add(1 * time.Hour)
 		}
 
 		transaction.OfferType = "On-demand"
