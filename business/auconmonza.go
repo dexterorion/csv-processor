@@ -4,10 +4,11 @@ import (
 	"context"
 	"encoding/xml"
 	"fmt"
-	"github.com/soap-parser/model"
-	"github.com/soap-parser/mongo"
 	"os"
 	"time"
+
+	"github.com/soap-parser/model"
+	"github.com/soap-parser/mongo"
 )
 
 const (
@@ -68,6 +69,9 @@ func (am *auconMonzaImpl) credenciaisProcess(ctx context.Context) error {
 			transaction.Categoria = cred.CATEGORIA
 			transaction.UseType = cred.CATEGORIA
 
+			transaction.Status = resolveStatus(&transaction)
+			transaction.IsValid = resolveValid(&transaction)
+
 			_, err = am.dbAcess.TransactionCollection.Update(ctx, &transaction)
 
 			if err != nil {
@@ -112,11 +116,12 @@ func (am *auconMonzaImpl) pagamentosProcess(ctx context.Context) error {
 		transaction.Matricula = pagto.Matricula
 		transaction.PaymentDate = pd
 
+		transaction.Status = resolveStatus(transaction)
+		transaction.IsValid = resolveValid(transaction)
+
 		if transaction.ID.IsZero() {
 			transaction, err = am.dbAcess.TransactionCollection.Create(ctx, transaction)
 		} else {
-			transaction.Status = resolveStatus(transaction)
-			transaction.IsValid = resolveValid(transaction)
 			transaction, err = am.dbAcess.TransactionCollection.Update(ctx, transaction)
 		}
 
@@ -139,6 +144,49 @@ func resolveValid(transaction *model.Transaction) bool {
 
 	return true
 }
+
+/*
+	{
+	"_id" : ObjectId("60086c095b8f09069061d147"),
+	"time_interval_hour" : [
+		ISODate("2020-10-01T09:00:00Z"),
+		ISODate("2020-10-01T10:00:00Z"),
+		ISODate("2020-10-01T11:00:00Z"),
+		ISODate("2020-10-01T12:00:00Z")
+	],
+	"checkin_date" : ISODate("2020-10-01T08:45:46Z"),
+	"checkout_date" : ISODate("2020-10-01T12:16:24Z"),
+	"payment_date" : ISODate("0001-01-01T00:00:00Z"),
+	"fare_amount" : 0,
+	"fare_name" : "",
+	"paid_amount" : 0,
+	"discount" : 0,
+	"payment_data" : "",
+	"payment_method" : "",
+	"use_type" : "Proprietário",
+	"offer_type" : "On-demand",
+	"duration" : 4,
+	"is_valid" : false,
+	"parking_info" : {
+		"id" : NumberLong(6),
+		"name" : "Monza",
+		"slug" : "monza"
+	},
+	"status" : 0,
+	"cash_register_id" : NumberLong(0),
+	"sequence" : "0",
+	"fiscal" : "",
+	"partial" : "",
+	"matricula" : "982",
+	"categoria" : "Proprietário",
+	"version" : 2,
+	"schema" : 1,
+	"created_at" : ISODate("2021-01-20T17:44:41.838Z"),
+	"updated_at" : ISODate("2021-01-20T20:18:18.748Z")
+}
+
+
+*/
 
 func resolveStatus(transaction *model.Transaction) int {
 	if transaction.Sequence == "0" && transaction.Matricula != "0" && transaction.FareAmount == 0 {
@@ -268,12 +316,12 @@ func (am *auconMonzaImpl) saidasProcess(ctx context.Context) error {
 		transaction.ParkingInfo = am.parking
 
 		transaction.UseType = getUseTypeSaida(saida)
+		transaction.Status = resolveStatus(transaction)
+		transaction.IsValid = resolveValid(transaction)
 
 		if transaction.ID.IsZero() {
 			transaction, err = am.dbAcess.TransactionCollection.Create(ctx, transaction)
 		} else {
-			transaction.Status = resolveStatus(transaction)
-			transaction.IsValid = resolveValid(transaction)
 			transaction, err = am.dbAcess.TransactionCollection.Update(ctx, transaction)
 		}
 
