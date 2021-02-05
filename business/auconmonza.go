@@ -68,7 +68,6 @@ func (am *auconMonzaImpl) credenciaisProcess(ctx context.Context) error {
 		for _, transaction := range transactions {
 			transaction.Categoria = cred.CATEGORIA
 			transaction.UseType = cred.CATEGORIA
-
 			transaction.Status = resolveStatus(&transaction)
 			transaction.IsValid = resolveValid(&transaction)
 
