@@ -28,7 +28,7 @@ func NewConnection() (*DB, error) {
 
 	database := client.Database(os.Getenv("LOTS_API_MONGO_DB"))
 	if database == nil {
-		return nil, errors.ErrorDBNotFound(os.Getenv("KOHO_API_MONGO_DB"))
+		return nil, errors.ErrorDBNotFound(os.Getenv("LOTS_API_MONGO_DB"))
 	}
 
 	transactionCol, err := NewTransactionCollection(ctx, database)
