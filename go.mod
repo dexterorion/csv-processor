@@ -1,4 +1,4 @@
-module github.com/soap-parser
+module github.com/csv-processor
 
 go 1.15
 

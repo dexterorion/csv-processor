@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/soap-parser/errors"
-	"github.com/soap-parser/model"
+	"github.com/csv-processor/errors"
+	"github.com/csv-processor/model"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"

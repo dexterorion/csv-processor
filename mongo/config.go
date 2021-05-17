@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/soap-parser/errors"
+	"github.com/csv-processor/errors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )

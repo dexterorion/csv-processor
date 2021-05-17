@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
+	"encoding/csv"
 	"flag"
 	"fmt"
-	"github.com/soap-parser/business"
-	"github.com/soap-parser/model"
-	"github.com/soap-parser/mongo"
-	"io/ioutil"
+
+	"github.com/csv-processor/business"
+	"github.com/csv-processor/model"
+	"github.com/csv-processor/mongo"
+
+	"os"
 
 	"go.uber.org/zap"
-	"os"
 )
 
 var (
@@ -24,13 +26,13 @@ var (
 )
 
 func init() {
-	flag.StringVar(&processFile, "xmlFilePath", "/home/user/request.xml", "path to file with XML to parse")
-	flag.StringVar(&filetype, "filetype", "pagamentos", "file type to be processed")
+	flag.StringVar(&processFile, "csvFile", "/home/user/file.csv", "path to file with CSV to parse")
+	flag.StringVar(&filetype, "filetype", "transactions", "file type to be processed")
 	flag.StringVar(&parkname, "parkname", "Monza", "the name of park to get business logic")
 	flag.StringVar(&parkslug, "parkslug", "monza", "the slug of park to get business logic")
 	flag.Int64Var(&parkid, "parkid", 6, "the id of park to get business logic")
 
-	required := []string{"xmlFilePath", "parkname", "filetype", "parkslug", "parkid"}
+	required := []string{"csvFile", "parkname", "filetype", "parkslug", "parkid"}
 	flag.Parse()
 
 	seen := make(map[string]bool)
@@ -46,7 +48,7 @@ func init() {
 }
 
 func main() {
-	log.Info("Starting soap parser")
+	log.Info("Starting parser")
 	defer log.Sync()
 
 	db, err := mongo.NewConnection()
@@ -55,11 +57,13 @@ func main() {
 		os.Exit(2)
 	}
 
-	file, err := ioutil.ReadFile(processFile)
+	csvIn, err := os.Open(processFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error opening file [%s]: [%s]\n", processFile, err.Error())
 		os.Exit(2)
 	}
+	defer csvIn.Close()
+	reader := csv.NewReader(csvIn)
 
 	parking := model.Parking{
 		Name: parkname,
@@ -67,7 +71,7 @@ func main() {
 		ID:   parkid,
 	}
 
-	processor := business.NewAuconMonza(db, file, filetype, parking)
+	processor := business.NewVP(db, reader, filetype, parking)
 	err = processor.Process(context.Background())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error processing file [%s]: [%s]\n", processFile, err.Error())

@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/soap-parser/errors"
+	"github.com/csv-processor/errors"
 	"github.com/stretchr/testify/require"
 )
 
