@@ -5,6 +5,8 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"os/signal"
+	"syscall"
 
 	"github.com/csv-processor/business"
 	"github.com/csv-processor/model"
@@ -77,6 +79,10 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error processing file [%s]: [%s]\n", processFile, err.Error())
 		os.Exit(2)
 	}
+
+	termChan := make(chan os.Signal)
+	signal.Notify(termChan, syscall.SIGINT, syscall.SIGTERM)
+	<-termChan // Blocks here until either SIGINT or SIGTERM is received.
 
 	log.Info("Finishing...")
 }
