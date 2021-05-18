@@ -124,6 +124,7 @@ func (s *vpImpl) processLine() {
 			UseType:       getUseType(line.Table),
 			OfferType:     "On-demand",
 			PaymentMethod: getPaymentMethod(line.PaymentMethod),
+			ParkingInfo:   s.parking,
 		}
 
 		transaction.TimeIntervalHour = []time.Time{}
@@ -145,34 +146,42 @@ func (s *vpImpl) processLine() {
 			ci = ci.Add(1 * time.Hour)
 		}
 
-		s.dbAcess.TransactionCollection.Create(context.Background(), transaction)
+		// s.dbAcess.TransactionCollection.Create(context.Background(), transaction)
 	}
 }
 
 func getUseType(value string) string {
-	if value == "Mensalista" {
+	if value == "MENSALISTA" {
 		return "Mensalista"
 	}
 
-	return "Avulso"
+	if strings.Contains(value, "NORMAL") ||
+		strings.Contains(value, "Rotativo") ||
+		strings.Contains(value, "SELO 1 HORA") {
+		return "Avulso"
+	}
+
+	panic(value)
 }
 
 func getPaymentMethod(value string) string {
 	switch value {
-	case "CC":
+	case "CREDITO":
 		return "Creditcard"
-	case "CD":
+	case "DEBITO":
 		return "Debitcard"
-	case "DI":
+	case "DINHEIRO":
 		return "Dinheiro"
 	case "CA":
 		return "Cancelado"
-	case "IS":
-		return "Isento"
-	case "CH":
-		return "Cheque"
+	case "CONECT CAR":
+		return "ConectCar"
+	case "SEMPARAR":
+		return "SemParar"
+	case "N/I":
+		return "N/I"
 	default:
-		return "Outro"
+		panic(value)
 	}
 }
 
