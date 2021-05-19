@@ -73,16 +73,20 @@ func (s *vpImpl) transactionsProcess(ctx context.Context) error {
 			}
 		}
 
-		cin, parsed := parseDate(line[6])
-		if !parsed {
-			fmt.Println(line[6])
+		if line[6] == "" || line[8] == "" {
 			continue
 		}
 
-		cout, parsed := parseDate(line[7])
+		cin, parsed := parseDate(line[6])
 		if !parsed {
-			fmt.Println(line[7])
-			continue
+			fmt.Println(line[6])
+			panic(line[6])
+		}
+
+		cout, parsed := parseDate(line[8])
+		if !parsed {
+			fmt.Println(line[8])
+			panic(line[8])
 		}
 
 		paid, _ := strconv.ParseFloat(line[10], 64)
@@ -92,7 +96,7 @@ func (s *vpImpl) transactionsProcess(ctx context.Context) error {
 			Ticket:        line[1],
 			Identity:      line[2],
 			Matricula:     line[3],
-			UseType:       line[4],
+			UseType:       line[5],
 			CheckIn:       cin,
 			CheckOut:      cout,
 			Duration:      int64(cout.Sub(cin).Minutes()),
@@ -109,6 +113,8 @@ func (s *vpImpl) processLine() {
 	s.logger.Info("Starting process line")
 	for {
 		line := <-s.cn
+
+		s.logger.Info("processing...")
 
 		ci := line.CheckIn
 		co := line.CheckOut
@@ -146,7 +152,12 @@ func (s *vpImpl) processLine() {
 			ci = ci.Add(1 * time.Hour)
 		}
 
-		// s.dbAcess.TransactionCollection.Create(context.Background(), transaction)
+		s.logger.Sugar().Infow("pre insert", "transaction", transaction)
+		transaction, err := s.dbAcess.TransactionCollection.Create(context.Background(), transaction)
+		if err != nil {
+			s.logger.Info(err.Error())
+		}
+		s.logger.Sugar().Infow("postinsert", "transaction", transaction)
 	}
 }
 
@@ -178,6 +189,10 @@ func getPaymentMethod(value string) string {
 		return "ConectCar"
 	case "SEMPARAR":
 		return "SemParar"
+	case "VELOE":
+		return "Veloe"
+	case "TRANSFERENCIA":
+		return "Transferência"
 	case "N/I":
 		return "N/I"
 	default:
@@ -195,17 +210,18 @@ func parseDate(dt string) (date time.Time, parsed bool) {
 	if len(days) != 3 {
 		return time.Now(), false
 	}
-	day, _ := strconv.Atoi(days[1])
-	month, _ := strconv.Atoi(days[0])
+	day, _ := strconv.Atoi(days[0])
+	month, _ := strconv.Atoi(days[1])
 	year, _ := strconv.Atoi(days[2])
 
 	hours := strings.Split(d[1], ":")
-	if len(hours) != 2 {
+	if len(hours) != 3 {
 		return time.Now(), false
 	}
 
 	hour, _ := strconv.Atoi(hours[0])
 	min, _ := strconv.Atoi(hours[1])
+	secs, _ := strconv.Atoi(hours[2])
 
-	return time.Date(year+2000, time.Month(month), day, hour, min, 0, 0, time.UTC), true
+	return time.Date(year, time.Month(month), day, hour, min, secs, 0, time.UTC), true
 }
