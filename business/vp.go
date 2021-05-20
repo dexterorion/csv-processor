@@ -73,7 +73,7 @@ func (s *vpImpl) transactionsProcess(ctx context.Context) error {
 			}
 		}
 
-		if line[6] == "" || line[8] == "" {
+		if line[6] == "" || line[7] == "" {
 			continue
 		}
 
@@ -83,10 +83,10 @@ func (s *vpImpl) transactionsProcess(ctx context.Context) error {
 			panic(line[6])
 		}
 
-		cout, parsed := parseDate(line[8])
+		cout, parsed := parseDate(line[7])
 		if !parsed {
-			fmt.Println(line[8])
-			panic(line[8])
+			fmt.Println(line[7])
+			panic(line[7])
 		}
 
 		paid, _ := strconv.ParseFloat(line[10], 64)
@@ -96,7 +96,7 @@ func (s *vpImpl) transactionsProcess(ctx context.Context) error {
 			Ticket:        line[1],
 			Identity:      line[2],
 			Matricula:     line[3],
-			UseType:       line[5],
+			UseType:       line[4],
 			CheckIn:       cin,
 			CheckOut:      cout,
 			Duration:      int64(cout.Sub(cin).Minutes()),
